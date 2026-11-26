@@ -22,6 +22,18 @@ function scrollToSection(selector) {
   target.scrollIntoView({behavior:reducedMotion.matches ? 'instant' : 'smooth',block:'start'});
 }
 
+const calculatorDialog = $('#calculator-dialog');
+function openCalculator() {
+  closeMenu();
+  if (calculatorDialog.open) return;
+  calculatorDialog.showModal();
+  calculatorDialog.scrollTop = 0;
+  document.body.classList.add('calculator-open');
+}
+$('.calculator-close').addEventListener('click', () => calculatorDialog.close());
+calculatorDialog.addEventListener('close', () => document.body.classList.remove('calculator-open'));
+document.querySelectorAll('[data-open-calculator]').forEach(button => button.addEventListener('click',openCalculator));
+
 function buildServiceCards() {
   services.forEach((service,index) => {
     const card = element('button','service-card reveal');
@@ -37,7 +49,7 @@ function buildServiceCards() {
     card.addEventListener('click', () => {
       quantities.set(service.id,Math.max(1,quantities.get(service.id)));
       updateCalculation();
-      scrollToSection('#calculator');
+      openCalculator();
       controls.get(service.id).plus.focus({preventScroll:true});
     });
     $('#services-grid').append(card);
@@ -98,13 +110,14 @@ function updateCalculation() {
     summary.append(row);
   });
   $('#form-total').textContent = money(sum);
+  $('#clear-form-calculation').hidden = count === 0;
 }
 
 $('.offer-sills').addEventListener('click',event => {
   event.preventDefault();
   quantities.set('restoration',Math.max(1,quantities.get('restoration')));
   updateCalculation();
-  scrollToSection('#calculator');
+  openCalculator();
   controls.get('restoration').plus.focus({preventScroll:true});
 });
 
@@ -112,7 +125,13 @@ $('#reset-calculator').addEventListener('click', () => {
   services.forEach(service => quantities.set(service.id,0));
   updateCalculation();
 });
+$('#clear-form-calculation').addEventListener('click', () => {
+  services.forEach(service => quantities.set(service.id,0));
+  updateCalculation();
+});
+
 $('#continue-request').addEventListener('click', () => {
+  calculatorDialog.close();
   scrollToSection('#request-form');
   $('#customer-name').focus({preventScroll:true});
 });
