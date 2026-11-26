@@ -333,3 +333,84 @@ body.calculator-open{overflow:hidden}
 
 .calculator-close{position:sticky;float:right;top:12px;right:12px;margin:10px 12px -46px 0}
 .quantity-control button{--cut:4px;clip-path:var(--cut-shape)}
+
+/* Continuous composition with generous, horizontally browsable modules. */
+:root{--cut-shape:polygon(var(--cut) 0,100% 0,100% 100%,0 100%,0 var(--cut))}
+.site-header,.site-header.compact{background:transparent;border-bottom:0;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.about-section,.faq-section,.contact-section,.request-form,.footer-legal{border-top:0}
+.offer-card,.service-card,.order-summary,.dialog,.calculator-dialog,.button,.quantity-control button{clip-path:var(--cut-shape)}
+.offer-layout{display:grid;grid-template-columns:3fr 9fr;gap:24px;min-width:0}
+.offer-intro{grid-column:1;grid-row:1 / span 2;min-width:0;padding-top:24px}
+.offer-intro h2{font-size:clamp(24px,2.5vw,38px)}
+.offer-intro p{max-width:240px;font-size:15px}
+.offer-fact{margin-top:55px;display:block;padding:0}
+.offer-fact-number{font-size:100px}
+.offer-fact p{font-size:13px;max-width:210px}
+.horizontal-rail{display:flex!important;gap:24px;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x proximity;scrollbar-color:#777 #111;scrollbar-width:thin;padding:5px 0 22px;min-width:0;cursor:grab}
+.horizontal-rail::-webkit-scrollbar{height:3px}.horizontal-rail::-webkit-scrollbar-track{background:#111}.horizontal-rail::-webkit-scrollbar-thumb{background:#777}
+.horizontal-rail.dragging{cursor:grabbing;scroll-snap-type:none;user-select:none}
+.horizontal-rail.dragging>*{pointer-events:none}
+.offer-grid{grid-column:2;grid-row:1;align-items:stretch}
+.offer-grid .offer-card,.offer-grid .offer-card:nth-child(n){flex:0 0 clamp(430px,38vw,580px);width:clamp(430px,38vw,580px);min-height:480px;height:480px;margin:0;padding:40px;grid-column:auto;grid-row:auto;scroll-snap-align:start}
+.offer-card:before{background:linear-gradient(145deg,#767676 0%,#333 30%,#101010 80%)}
+.offer-sills:before{background:linear-gradient(150deg,#353535 0%,#181818 38%,#030303 90%)}
+.offer-price:before{background:linear-gradient(25deg,#070707 5%,#272727 65%,#676767 100%)}
+.offer-grid .offer-card h2{font-size:clamp(34px,3.1vw,48px);letter-spacing:-.06em;line-height:1.2}
+.offer-grid .offer-sills h2{font-size:clamp(25px,2.35vw,36px)}
+.offer-grid .offer-card p{font-size:16px;max-width:390px;margin-top:30px;color:#c9c9c9}
+.offer-grid .offer-link{font-size:14px}
+.rail-toolbar{display:flex;justify-content:space-between;align-items:center;gap:20px;padding-top:10px;color:var(--text);font-size:12px}
+.offer-layout>.rail-toolbar{grid-column:2;grid-row:2}
+.rail-buttons{display:flex;gap:12px}
+.rail-buttons button{background:transparent;border:1px solid #444;color:white;padding:12px 20px;min-height:44px;font-size:12px;--cut:7px;clip-path:var(--cut-shape)}
+.rail-buttons button:hover{background:#222}.rail-buttons button:disabled{opacity:.3;cursor:default}
+#services .services-grid{margin-left:12%;width:88%;padding-top:10px;align-items:stretch}
+#services .service-card,#services .service-card:nth-child(n){flex:0 0 clamp(360px,34vw,500px);width:clamp(360px,34vw,500px);min-height:410px;height:410px;grid-column:auto;margin:0;padding:36px;background:linear-gradient(150deg,#333 0%,#151515 45%,#050505 100%);scroll-snap-align:start}
+#services .service-card:nth-child(3n+2){background:linear-gradient(25deg,#050505 0%,#1b1b1b 65%,#4a4a4a 100%)}
+#services .service-card:nth-child(3n){background:linear-gradient(150deg,#555 0%,#252525 25%,#080808 80%)}
+#services .service-card h3{font-size:clamp(36px,3.5vw,54px);margin-top:55px;max-width:none;line-height:1.2}
+.service-kind{font-size:15px;color:#aaa;margin-top:13px}
+#services .service-price{font-size:32px;padding-top:35px}
+#services .service-direction{right:32px;bottom:35px}
+#services>.rail-toolbar{margin-left:12%}
+.process-list{padding:5px 0 24px!important;gap:24px}
+.process-list:before{display:none}
+.process-list .process-step,.process-list .process-step:nth-child(n){flex:0 0 clamp(310px,28vw,430px);display:flex;flex-direction:column;min-height:360px;padding:32px;margin:0;background:linear-gradient(150deg,#202020 0%,#080808 80%);border:0;--cut:16px;clip-path:var(--cut-shape);scroll-snap-align:start}
+.process-list .process-step:nth-child(even){background:linear-gradient(25deg,#050505 0%,#171717 65%,#3e3e3e 100%)}
+.process-list .step-number{font-size:95px;color:#8a8a8a;line-height:1;background:transparent;padding:0}
+.process-list .process-step h3{font-size:24px;margin-top:36px}
+.process-list .process-step p{font-size:15px;margin-top:18px;max-width:320px}
+.review-card{background:linear-gradient(145deg,#292929,#080808 75%);padding:45px;min-height:320px;--cut:18px;clip-path:var(--cut-shape)}
+.review-card blockquote{font-size:clamp(23px,2.2vw,34px);line-height:1.55;font-weight:400}
+.demo-label{display:block;font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:#b0b0b0;margin-bottom:30px}
+.review-card>p{margin-top:25px}
+.review-controls button{--cut:7px;clip-path:var(--cut-shape);min-height:44px}
+@media(max-width:1024px){.offer-layout{grid-template-columns:1fr}.offer-intro{grid-column:1;grid-row:1;display:grid;grid-template-columns:1fr 1fr;column-gap:35px;align-items:start;padding:0}.offer-intro h2{font-size:34px}.offer-intro>p{margin-top:0;font-size:15px;max-width:340px}.offer-fact{grid-column:2;margin-top:22px;display:flex;align-items:center;gap:20px}.offer-fact-number{font-size:60px}.offer-fact p{margin:0}.offer-grid{grid-column:1;grid-row:2}.offer-layout>.rail-toolbar{grid-column:1;grid-row:3}.offer-grid .offer-card,.offer-grid .offer-card:nth-child(n){flex-basis:480px;width:480px;min-height:450px;height:450px}.offer-grid .offer-card h2{font-size:42px}.offer-grid .offer-sills h2{font-size:31px}}
+@media(max-width:800px){#services .services-grid{width:100%;margin-left:0}#services>.rail-toolbar{margin-left:0}.offer-grid .offer-card,.offer-grid .offer-card:nth-child(n){flex-basis:420px;width:420px;min-height:430px;height:430px;padding:32px}.offer-grid .offer-card h2{font-size:37px}.offer-grid .offer-sills h2{font-size:27px}.rail-toolbar>span{max-width:150px}.horizontal-rail{gap:18px}#services .service-card,#services .service-card:nth-child(n){flex-basis:360px;width:360px;height:370px;min-height:370px;padding:30px}#services .service-card h3{font-size:42px;margin-top:42px}.process-list .process-step,.process-list .process-step:nth-child(n){flex-basis:320px;min-height:340px;padding:28px}.process-list .step-number{font-size:80px}.process-list .process-step h3{font-size:23px}}
+@media(max-width:480px){.offer-intro{display:block}.offer-intro h2{font-size:32px}.offer-intro>p{margin-top:22px;font-size:14px}.offer-fact{display:flex;gap:22px;margin-top:25px}.offer-fact p{font-size:12px}.offer-grid .offer-card,.offer-grid .offer-card:nth-child(n){flex-basis:calc(100vw - 66px);width:calc(100vw - 66px);height:380px;min-height:380px;padding:25px}.offer-grid .offer-card h2{font-size:clamp(28px,8vw,35px)}.offer-grid .offer-sills h2{font-size:clamp(19px,5.5vw,25px)}.offer-grid .offer-card p{font-size:14px;margin-top:25px}.offer-grid .offer-link{font-size:12px}.rail-toolbar{gap:15px}.rail-toolbar>span{font-size:10px;max-width:120px}.rail-buttons{gap:8px}.rail-buttons button{padding:10px 14px;font-size:11px}#services .service-card,#services .service-card:nth-child(n){flex-basis:calc(100vw - 66px);width:calc(100vw - 66px);height:340px;min-height:340px;padding:26px}#services .service-card h3{font-size:38px;margin-top:40px}#services .service-price{font-size:28px}.service-kind{font-size:14px}.process-list .process-step,.process-list .process-step:nth-child(n){flex-basis:calc(100vw - 66px);min-height:320px;padding:26px}.process-list .process-step p{font-size:14px}.review-card{padding:28px;min-height:340px}.review-card blockquote{font-size:21px}.demo-label{font-size:10px}}
+
+/* One composition moves together: text, card, text, card. */
+.horizontal-rail{scrollbar-width:none;overflow-y:hidden}
+.horizontal-rail::-webkit-scrollbar{display:none}
+.rail-toolbar{justify-content:end;padding-top:20px}
+.rail-toolbar>span{max-width:none;font-size:12px;color:#a0a0a0}
+.offer-grid{width:100%;align-items:stretch}
+.offer-grid .offer-intro,.offer-grid .offer-fact,.offer-grid .offer-side-note{flex:0 0 310px;width:310px;min-width:0;height:480px;margin:0;padding:35px 25px 35px 0;display:flex;flex-direction:column;justify-content:center;scroll-snap-align:start}
+.offer-grid .offer-intro h2{font-size:30px;text-transform:none;line-height:1.35;letter-spacing:-.045em}
+.offer-grid .offer-intro p{margin-top:30px;font-size:15px;max-width:270px}
+.offer-grid .offer-fact{flex-basis:240px;width:240px;padding-inline:28px;justify-content:center}
+.offer-grid .offer-fact-number{font-size:125px;line-height:1.1}
+.offer-grid .offer-fact p{font-size:15px;max-width:210px;margin-top:25px}
+.offer-grid .offer-side-note{flex-basis:310px;width:310px;padding-inline:20px}
+.offer-side-note h2{font-size:32px;line-height:1.4;letter-spacing:-.045em}
+.offer-side-note p{font-size:15px;line-height:1.7;color:var(--text);margin-top:28px}
+.offer-grid .offer-card,.offer-grid .offer-card:nth-child(n){height:480px;min-height:480px}
+#reviews-content{display:flex;gap:24px}
+#reviews-content .review-card{flex:0 0 calc((100% - 48px)/3);width:calc((100% - 48px)/3);max-width:none;margin:0;padding:30px;min-height:380px;scroll-snap-align:start;display:flex;flex-direction:column}
+#reviews-content .review-card blockquote{font-size:20px;line-height:1.6}
+#reviews-content .review-card>p{font-size:13px;margin-top:auto;padding-top:25px;color:#b0b0b0}
+#reviews-content .demo-label{font-size:10px;line-height:1.6;margin-bottom:25px}
+#review-controls{display:none!important}
+@media(max-width:1024px){.offer-grid .offer-intro,.offer-grid .offer-fact,.offer-grid .offer-side-note{grid-column:auto;grid-row:auto;height:450px;display:flex}.offer-grid .offer-card,.offer-grid .offer-card:nth-child(n){height:450px;min-height:450px}#reviews-content .review-card{flex-basis:calc((100% - 24px)/2);width:calc((100% - 24px)/2)}}
+@media(max-width:800px){.offer-grid .offer-intro,.offer-grid .offer-fact,.offer-grid .offer-side-note{height:430px;flex-basis:280px;width:280px}.offer-grid .offer-fact{flex-basis:220px;width:220px}.offer-grid .offer-card,.offer-grid .offer-card:nth-child(n){height:430px;min-height:430px}.offer-grid .offer-intro h2{font-size:28px}.offer-side-note h2{font-size:29px}}
+@media(max-width:480px){.offer-grid .offer-intro,.offer-grid .offer-fact,.offer-grid .offer-side-note{height:380px;flex-basis:calc(100vw - 88px);width:calc(100vw - 88px);padding:25px 18px 25px 0;display:flex;justify-content:center}.offer-grid .offer-fact{padding-inline:22px;flex-basis:210px;width:210px}.offer-grid .offer-fact p{font-size:14px;margin-top:20px}.offer-grid .offer-fact-number{font-size:100px}.offer-grid .offer-intro h2{font-size:27px}.offer-grid .offer-intro p{font-size:14px;margin-top:24px}.offer-grid .offer-card,.offer-grid .offer-card:nth-child(n){height:380px;min-height:380px}.offer-side-note h2{font-size:28px}.offer-side-note p{font-size:14px}#reviews-content .review-card{flex-basis:calc(100vw - 66px);width:calc(100vw - 66px);min-height:360px;padding:28px}#reviews-content .review-card blockquote{font-size:19px}.rail-toolbar>span{font-size:11px}}

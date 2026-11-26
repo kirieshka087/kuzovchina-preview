@@ -41,7 +41,8 @@ function buildServiceCards() {
     card.setAttribute('aria-label',service.name + ', ' + money(service.price) + '. Добавить в расчёт');
     card.append(
       element('span','service-number',String(index + 1).padStart(2,'0')),
-      element('h3','',service.name),
+      element('h3','',service.name.replace('Покраска ','').replace('Восстановление ','').replace('бампера','Бампер').replace('двери','Дверь').replace('крыла','Крыло').replace('капота','Капот').replace('порога','Порог').replace('крыши','Крыша')),
+      element('span','service-kind',service.id === 'restoration' ? 'Восстановление' : 'Полная покраска'),
       element('span','service-price',money(service.price)),
       element('span','service-direction','↗')
     );
@@ -211,23 +212,17 @@ questions.forEach(([question,answer],index) => {
   $('#faq-list').append(item);
 });
 
-let reviewIndex = 0;
-function renderReview() {
+function buildReviewCards() {
   if (!reviews.length) return;
-  const review = reviews[reviewIndex];
-  const article = element('article','review-card');
-  article.append(element('blockquote','',review.text),element('p','',review.name + ' / ' + review.source));
-  if (review.date) article.append(element('p','',review.date));
-  if (review.rating != null) article.append(element('p','','Оценка ' + review.rating));
-  $('#reviews-content').replaceChildren(article);
-  $('#review-position').textContent = (reviewIndex + 1) + ' / ' + reviews.length;
+  $('#reviews-content').replaceChildren();
+  reviews.forEach(review => {
+    const article = element('article','review-card');
+    if (review.demo) article.append(element('span','demo-label','Тестовый отзыв · вымышленный'));
+    article.append(element('blockquote','',review.text),element('p','',review.name));
+    $('#reviews-content').append(article);
+  });
 }
-if (reviews.length) {
-  $('#review-controls').hidden = reviews.length < 2;
-  $('#review-prev').addEventListener('click', () => { reviewIndex = (reviewIndex - 1 + reviews.length) % reviews.length; renderReview(); });
-  $('#review-next').addEventListener('click', () => { reviewIndex = (reviewIndex + 1) % reviews.length; renderReview(); });
-  renderReview();
-}
+buildReviewCards();
 
 const menuToggle = $('.menu-toggle');
 function closeMenu() {
@@ -399,6 +394,77 @@ $('#copy-draft').addEventListener('click',async () => {
 buildServiceCards();
 buildCalculator();
 updateCalculation();
+
+function createHorizontalRail(rail,label) {
+  rail.classList.add('horizontal-rail');
+  rail.setAttribute('tabindex','0');
+  rail.setAttribute('role','region');
+  rail.setAttribute('aria-label',label);
+  const toolbar = element('div','rail-toolbar');
+  const hint = element('span','','Скролл влево–вправо');
+  const move = direction => {
+    const distance = rail.firstElementChild.getBoundingClientRect().width + 24;
+    rail.scrollBy({left:direction * distance,behavior:reducedMotion.matches ? 'instant' : 'smooth'});
+  };
+  rail.addEventListener('keydown',event => {
+    if (event.target !== rail || !['ArrowLeft','ArrowRight'].includes(event.key)) return;
+    event.preventDefault();
+    move(event.key === 'ArrowRight' ? 1 : -1);
+  });
+  let origin = null;
+  let dragging = false;
+  let suppressClick = false;
+  rail.addEventListener('pointerdown',event => {
+    if (event.pointerType !== 'mouse' || event.button !== 0) return;
+    event.preventDefault();
+    origin = {x:event.clientX,left:rail.scrollLeft,id:event.pointerId};
+    dragging = false;
+    suppressClick = false;
+  });
+  rail.addEventListener('pointermove',event => {
+    if (!origin) return;
+    const distance = event.clientX - origin.x;
+    if (!dragging && Math.abs(distance) > 8) {
+      dragging = true;
+      rail.setPointerCapture(origin.id);
+      rail.classList.add('dragging');
+    }
+    if (!dragging) return;
+    event.preventDefault();
+    rail.scrollLeft = origin.left - distance;
+  });
+  const stopDrag = () => {
+    suppressClick = dragging;
+    origin = null;
+    dragging = false;
+    rail.classList.remove('dragging');
+  };
+  rail.addEventListener('pointerup',stopDrag);
+  rail.addEventListener('pointercancel',stopDrag);
+  rail.addEventListener('pointerleave', () => { if (!dragging) origin = null; });
+  rail.addEventListener('click',event => {
+    if (!suppressClick) return;
+    event.preventDefault();
+    event.stopPropagation();
+    suppressClick = false;
+  },true);
+  rail.addEventListener('dragstart',event => event.preventDefault());
+  toolbar.append(hint);
+  rail.after(toolbar);
+}
+const offerRail = $('.offer-grid');
+const offerIntro = $('.offer-intro');
+const offerFact = $('.offer-fact');
+const offerPaint = $('.offer-paint');
+const offerSills = $('.offer-sills');
+const offerPrice = $('.offer-price');
+const offerNote = element('div','offer-side-note');
+offerNote.append(element('h2','gradient-text','Вы выбираете работы.'),element('p','','Предварительную сумму можно узнать сразу. Итоговую стоимость согласуем после оценки автомобиля.'));
+offerRail.replaceChildren(offerIntro,offerPaint,offerFact,offerSills,offerNote,offerPrice);
+createHorizontalRail(offerRail,'Основные направления');
+createHorizontalRail($('#services-grid'),'Детали и цены');
+createHorizontalRail($('#process-list'),'Этапы работы');
+if (reviews.length) createHorizontalRail($('#reviews-content'),'Тестовые отзывы');
 
 const revealObserver = new IntersectionObserver(entries => {
   entries.forEach(entry => {
