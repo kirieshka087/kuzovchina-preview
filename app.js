@@ -100,6 +100,14 @@ function updateCalculation() {
   $('#form-total').textContent = money(sum);
 }
 
+$('.offer-sills').addEventListener('click',event => {
+  event.preventDefault();
+  quantities.set('restoration',Math.max(1,quantities.get('restoration')));
+  updateCalculation();
+  scrollToSection('#calculator');
+  controls.get('restoration').plus.focus({preventScroll:true});
+});
+
 $('#reset-calculator').addEventListener('click', () => {
   services.forEach(service => quantities.set(service.id,0));
   updateCalculation();
@@ -392,11 +400,21 @@ const sectionObserver = new IntersectionObserver(entries => {
   });
 },{rootMargin:'-15% 0px -65% 0px'});
 document.querySelectorAll('.section-observed').forEach(node => sectionObserver.observe(node));
+const scrollTypography = [...document.querySelectorAll('.scroll-type')];
 let scrollFrame = false;
 function updateScrollUI() {
   $('.site-header').classList.toggle('compact',window.scrollY > 70);
   const range = document.documentElement.scrollHeight - window.innerHeight;
   $('.reading-progress').style.transform = 'scaleX(' + (range > 0 ? window.scrollY / range : 0) + ')';
+  if (!reducedMotion.matches && window.innerWidth > 800) {
+    scrollTypography.forEach(heading => {
+      const bounds = heading.getBoundingClientRect();
+      const progress = Math.max(-1,Math.min(1,(window.innerHeight * 0.55 - bounds.top) / window.innerHeight));
+      heading.style.setProperty('--type-shift',progress * 28 + 'px');
+    });
+  } else {
+    scrollTypography.forEach(heading => heading.style.setProperty('--type-shift','0px'));
+  }
   scrollFrame = false;
 }
 window.addEventListener('scroll', () => {
