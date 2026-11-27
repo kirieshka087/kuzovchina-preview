@@ -436,16 +436,6 @@ function createHorizontalRail(rail,label) {
   toolbar.append(hint);
   rail.after(toolbar);
 }
-const offerRail = $('.offer-grid');
-const offerIntro = $('.offer-intro');
-const offerFact = $('.offer-fact');
-const offerPaint = $('.offer-paint');
-const offerSills = $('.offer-sills');
-const offerPrice = $('.offer-price');
-const offerNote = element('div','offer-side-note');
-offerNote.append(...$('.offer-side-note').childNodes);
-offerRail.replaceChildren(offerIntro,offerPaint,offerFact,offerSills,offerNote,offerPrice);
-createHorizontalRail(offerRail,'Основные направления');
 createHorizontalRail($('#services-grid'),'Виды покраски и базовые цены');
 createHorizontalRail($('#process-list'),'Этапы работы');
 if (reviews.length) createHorizontalRail($('#reviews-content'),'Тестовые отзывы');
@@ -498,4 +488,32 @@ $('#business-request').addEventListener('click', () => {
   $('#customer-type').value = 'business';
   scrollToSection('#request-form');
   $('#customer-name').focus({preventScroll:true});
+});
+
+const reportStages = [
+ {image:'frame-1600.webp',alt:'Рабочая зона кузовного сервиса',title:'Осмотр и согласование',text:'Повреждения, перечень работ, стоимость и сроки. Согласуем всё перед ремонтом.'},
+ {image:'preparation-1600.webp',alt:'Подготовленные кузовные детали',title:'Подготовка деталей',text:'Подготовительные работы с кузовными элементами перед нанесением покрытия.'},
+ {image:'paint-1600.webp',alt:'Детали в покрасочной камере',title:'Покраска и проверка',text:'Покраска в камере и контроль качества перед приёмкой автомобиля.'}
+];
+const reportTabs = [...document.querySelectorAll('[data-report-stage]')];
+function showReportStage(index) {
+ const stage = reportStages[index];
+ reportTabs.forEach((tab,i) => { tab.classList.toggle('active',i === index); tab.setAttribute('aria-selected',String(i === index)); tab.tabIndex = i === index ? 0 : -1; });
+ $('#report-photo').src = 'assets/' + stage.image;
+ $('#report-photo').alt = stage.alt;
+ $('#report-step-title').textContent = stage.title;
+ $('#report-step-description').textContent = stage.text;
+ $('#report-progress').textContent = String(index + 1).padStart(2,'0') + ' / 03';
+ $('#report-panel').setAttribute('aria-labelledby','report-tab-' + index);
+}
+reportTabs.forEach((tab,index) => {
+ tab.addEventListener('click', () => showReportStage(index));
+ tab.addEventListener('keydown',event => {
+  let next;
+  if (['ArrowDown','ArrowRight'].includes(event.key)) next = (index + 1) % reportTabs.length;
+  if (['ArrowUp','ArrowLeft'].includes(event.key)) next = (index + reportTabs.length - 1) % reportTabs.length;
+  if (event.key === 'Home') next = 0;
+  if (event.key === 'End') next = reportTabs.length - 1;
+  if (next !== undefined) {event.preventDefault(); showReportStage(next); reportTabs[next].focus();}
+ });
 });

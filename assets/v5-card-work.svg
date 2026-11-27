@@ -1,0 +1,18 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="471" height="491" viewBox="0 0 471 491" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="CardBackground">
+<use xlink:href="#stroke0_0_27" fill="#1A1C20"/>
+<use xlink:href="#stroke0_0_27" fill="url(#paint0_radial_0_27)"/>
+<path d="M24.5 0.5H470.5V490.5H0.5V28.5L24.5 0.5Z" stroke="black"/>
+</g>
+<defs>
+<radialGradient id="paint0_radial_0_27" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(9.89999 529.7) scale(413.6 431.2)">
+<stop stop-color="#F9D8DA" stop-opacity="0.96"/>
+<stop offset="0.13" stop-color="#F49AA2" stop-opacity="0.9"/>
+<stop offset="0.32" stop-color="#F45261" stop-opacity="0.8"/>
+<stop offset="0.55" stop-color="#DB2434" stop-opacity="0.35"/>
+<stop offset="0.78" stop-color="#DB2434" stop-opacity="0.06"/>
+<stop offset="1" stop-color="#DB2434" stop-opacity="0"/>
+</radialGradient>
+<path id="stroke0_0_27" d="M24.5 0.5H470.5V490.5H0.5V28.5L24.5 0.5Z"/>
+</defs>
+</svg>
