@@ -15,7 +15,7 @@ let requestPending = false;
 function element(tag,className,text) {
   const node = document.createElement(tag);
   if (className) node.className = className;
-  if (text !== undefined) node.textContent = text;
+  if (text !== undefined) node.textContent = /^h[1-4]$/.test(tag) ? text.replace(/\.$/, '') : text;
   return node;
 }
 
@@ -23,6 +23,17 @@ function scrollToSection(selector) {
   const target = $(selector);
   target.scrollIntoView({behavior:reducedMotion.matches ? 'instant' : 'smooth',block:'start'});
 }
+
+async function closeDialog(dialog) {
+  if (!dialog.open || dialog.dataset.closing) return;
+  dialog.dataset.closing = 'true';
+  if (!reducedMotion.matches) {
+    try {await dialog.animate([{opacity:1,transform:'translateY(0)'},{opacity:0,transform:'translateY(8px)'}],{duration:280,easing:'cubic-bezier(.25,.1,.25,1)'}).finished;} catch {}
+  }
+  dialog.close();
+  delete dialog.dataset.closing;
+}
+document.querySelectorAll('dialog').forEach(dialog => dialog.addEventListener('cancel',event => {event.preventDefault(); closeDialog(dialog);}));
 
 const calculatorDialog = $('#calculator-dialog');
 function openCalculator() {
@@ -32,7 +43,7 @@ function openCalculator() {
   calculatorDialog.scrollTop = 0;
   document.body.classList.add('calculator-open');
 }
-$('.calculator-close').addEventListener('click', () => calculatorDialog.close());
+$('.calculator-close').addEventListener('click', () => closeDialog(calculatorDialog));
 calculatorDialog.addEventListener('close', () => document.body.classList.remove('calculator-open'));
 document.querySelectorAll('[data-open-calculator]').forEach(button => button.addEventListener('click',openCalculator));
 
@@ -105,29 +116,19 @@ function updateCalculation() {
   $('#selection-count').textContent = count ? 'В расчёте — ' + count : 'Услуги не выбраны';
   $('#continue-request').disabled = count === 0;
   $('#reset-calculator').disabled = count === 0;
-  const summary = $('#selected-services');
-  summary.replaceChildren();
-  if (!count) summary.textContent = 'Услуги ещё не выбраны. Можно отправить обращение без расчёта.';
-  selected().forEach(service => {
-    const row = element('div','summary-item');
-    row.append(element('span','',service.name + ' × ' + quantities.get(service.id)),element('span','',quantities.get(service.id) > 1 ? 'Индивидуально' : servicePrice(service)));
-    summary.append(row);
-  });
-  $('#form-total').textContent = estimate();
-  $('#clear-form-calculation').hidden = count === 0;
+  const context = $('#calculation-context');
+  context.hidden = count === 0;
+  context.textContent = count ? 'Выбранные работы добавим в черновик обращения' : '';
+
 }
 
 $('#reset-calculator').addEventListener('click', () => {
   services.forEach(service => quantities.set(service.id,0));
   updateCalculation();
 });
-$('#clear-form-calculation').addEventListener('click', () => {
-  services.forEach(service => quantities.set(service.id,0));
-  updateCalculation();
-});
 
-$('#continue-request').addEventListener('click', () => {
-  calculatorDialog.close();
+$('#continue-request').addEventListener('click', async () => {
+  await closeDialog(calculatorDialog);
   scrollToSection('#request-form');
   $('#customer-name').focus({preventScroll:true});
 });
@@ -231,7 +232,10 @@ document.addEventListener('keydown',event => {
 });
 matchMedia('(min-width:801px)').addEventListener('change',event => { if (event.matches) closeMenu(); });
 
+let filePreviewUrls = [];
 function renderFiles() {
+  filePreviewUrls.forEach(url => URL.revokeObjectURL(url));
+  filePreviewUrls = [];
   $('#file-list').replaceChildren();
   files.forEach((file,index) => {
     const li = element('li','file-entry');
@@ -243,7 +247,12 @@ function renderFiles() {
       renderFiles();
       $('#file-error').textContent = '';
     });
-    li.append(element('span','',file.name + ' / ' + (file.size / 1024 / 1024).toFixed(1) + ' МБ'),remove);
+    const thumbnail = element('img','file-thumbnail');
+    const previewUrl = URL.createObjectURL(file);
+    filePreviewUrls.push(previewUrl);
+    thumbnail.src = previewUrl;
+    thumbnail.alt = 'Выбранное фото — ' + file.name;
+    li.append(thumbnail,element('span','file-description',file.name + ' / ' + (file.size / 1024 / 1024).toFixed(1) + ' МБ'),remove);
     $('#file-list').append(li);
   });
 }
@@ -360,7 +369,7 @@ if (integration.endpoint) {
   $('#submit-request>span').textContent = 'Отправить заявку';
   $('.form-intro>.note').textContent = 'Отправляя заявку, вы передаёте данные мастерской.';
 }
-document.querySelectorAll('.dialog').forEach(dialog => dialog.querySelector('.dialog-close').addEventListener('click', () => dialog.close()));
+document.querySelectorAll('.dialog').forEach(dialog => dialog.querySelector('.dialog-close').addEventListener('click', () => closeDialog(dialog)));
 function openPrivacy() { $('#privacy-dialog').showModal(); }
 $('#privacy-open').addEventListener('click',openPrivacy);
 $('.privacy-trigger').addEventListener('click',openPrivacy);
@@ -485,7 +494,7 @@ window.addEventListener('resize',updateScrollUI);
 updateScrollUI();
 
 $('#business-request').addEventListener('click', () => {
-  $('#customer-type').value = 'business';
+  $('#request-form').elements.customerType.value = 'business';
   scrollToSection('#request-form');
   $('#customer-name').focus({preventScroll:true});
 });
@@ -517,3 +526,82 @@ reportTabs.forEach((tab,index) => {
   if (next !== undefined) {event.preventDefault(); showReportStage(next); reportTabs[next].focus();}
  });
 });
+
+// Deliberate motion: restrained page entrance, one-time reveals and pointer light.
+const premiumMotionQuery = matchMedia('(prefers-reduced-motion: reduce)');
+document.documentElement.classList.add('motion-ready');
+if ('IntersectionObserver' in window) {
+ const premiumObserver = new IntersectionObserver(entries => {
+  entries.forEach(entry => {if(entry.isIntersecting){entry.target.classList.add('is-visible');premiumObserver.unobserve(entry.target);}});
+ },{threshold:.12,rootMargin:'0px 0px -18px 0px'});
+ document.querySelectorAll('.studio-gallery figure,.work-gallery figure,.report-layout,.business-layout').forEach(node => {node.classList.add('premium-reveal');premiumObserver.observe(node);});
+}
+if (matchMedia('(hover: hover) and (pointer: fine)').matches && !premiumMotionQuery.matches) {
+ document.querySelectorAll('.object-card,.service-card').forEach(card => {
+  let frame = null, target = {x:80,y:90}, current = {x:80,y:90};
+  const moveLight = () => {
+   current.x += (target.x - current.x) * .1;
+   current.y += (target.y - current.y) * .1;
+   card.style.setProperty('--light-x',current.x.toFixed(2) + '%');
+   card.style.setProperty('--light-y',current.y.toFixed(2) + '%');
+   if (Math.abs(target.x-current.x)+Math.abs(target.y-current.y) > .2) frame = requestAnimationFrame(moveLight); else frame = null;
+  };
+  card.addEventListener('pointermove',event => {
+   const rect = card.getBoundingClientRect();
+   target = {x:(event.clientX-rect.left)/rect.width*100,y:(event.clientY-rect.top)/rect.height*100};
+   if (!frame) frame=requestAnimationFrame(moveLight);
+  },{passive:true});
+  card.addEventListener('pointerleave',()=>{target={x:80,y:90};if(!frame)frame=requestAnimationFrame(moveLight);});
+ });
+}
+
+// Fixed three-second brand entrance; downloading is never delayed.
+setTimeout(() => {
+ document.getElementById('preloader')?.classList.add('is-done');
+ document.documentElement.classList.add('page-ready');
+ setTimeout(() => document.getElementById('preloader')?.remove(),300);
+},Math.max(0,2700 - (performance.now() - (window.__bootStart || 0))));
+
+document.querySelectorAll('[data-case-view]').forEach(button => button.addEventListener('click',() => {
+ const after = button.dataset.caseView === 'after';
+ document.querySelector('.repair-case').classList.toggle('show-after',after);
+ document.querySelector('.case-state').textContent = after ? 'После ремонта' : 'До ремонта';
+ document.querySelector('.case-after').setAttribute('aria-hidden',String(!after));
+ document.querySelector('.case-base').setAttribute('aria-hidden',String(after));
+ document.querySelectorAll('[data-case-view]').forEach(item => item.setAttribute('aria-pressed',String(item === button)));
+}));
+
+// Soft wheel interpolation; touch, keyboard and inner scroll areas remain native.
+if (matchMedia('(hover:hover) and (pointer:fine)').matches && !reducedMotion.matches) {
+ let targetY=window.scrollY, frame=0, last=0;
+ const stop=()=>{cancelAnimationFrame(frame);frame=0;targetY=window.scrollY;};
+ const tick=time=>{
+  const dt=Math.min(32,time-last || 16);last=time;
+  const distance=targetY-window.scrollY;
+  if(Math.abs(distance)<.6){window.scrollTo({top:targetY,behavior:'instant'});frame=0;return;}
+  window.scrollTo({top:window.scrollY+distance*(1-Math.exp(-dt/105)),behavior:'instant'});
+  frame=requestAnimationFrame(tick);
+ };
+ window.addEventListener('wheel',event=>{
+  if(event.ctrlKey || event.metaKey || Math.abs(event.deltaX)>Math.abs(event.deltaY) || document.querySelector('dialog[open]') || document.querySelector('.navigation.open') || event.target.closest('textarea,input,select,.contact-map')) return;
+  const rail=event.target.closest('.services-grid,.process-list,.reviews-track');
+  if(event.shiftKey && rail) return;
+  event.preventDefault();
+  if(!frame)targetY=window.scrollY;
+  const delta=event.deltaY*(event.deltaMode===1?16:event.deltaMode===2?innerHeight:1);
+  targetY=Math.max(0,Math.min(document.documentElement.scrollHeight-innerHeight,targetY+delta));
+  if(!frame){last=performance.now();frame=requestAnimationFrame(tick);}
+ },{passive:false});
+ window.addEventListener('pointerdown',stop,{passive:true});
+ window.addEventListener('keydown',stop,{passive:true});
+ document.addEventListener('click',event=>{if(event.target.closest('a[href^="#"]'))stop();});
+}
+let headerY=window.scrollY;
+window.addEventListener('scroll',()=>{
+ const y=window.scrollY,header=document.querySelector('.site-header');
+ if(Math.abs(y-headerY)<7)return;
+ const keepVisible=y<180 || header.contains(document.activeElement) || document.querySelector('.navigation.open');
+ header.classList.toggle('header-away',!keepVisible && y>headerY);
+ headerY=y;
+},{passive:true});
+document.querySelector('.site-header').addEventListener('focusin',()=>document.querySelector('.site-header').classList.remove('header-away'));
