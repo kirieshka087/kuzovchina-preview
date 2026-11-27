@@ -1,11 +1,8 @@
 export const services = [
-  {id:'bumper',name:'Покраска бампера',price:13000,max:10},
-  {id:'door',name:'Покраска двери',price:13000,max:10},
-  {id:'fender',name:'Покраска крыла',price:13000,max:10},
-  {id:'hood',name:'Покраска капота',price:15000,max:10},
-  {id:'sill',name:'Покраска порога',price:10000,max:10},
-  {id:'restoration',name:'Восстановление порога',price:6000,max:10},
-  {id:'roof',name:'Покраска крыши',price:20000,max:10}
+  {id:'local',name:'Локальная покраска',kind:'Участок детали',price:12000,max:10},
+  {id:'element',name:'Полная покраска детали',kind:'Один кузовной элемент',price:15000,max:10},
+  {id:'both',name:'Покраска двух сторон',kind:'Одна деталь с двух сторон',price:22500,max:10},
+  {id:'car',name:'Покраска авто полностью',kind:'Без проёмов',price:150000,from:true,max:1}
 ];
 
 // Connect the approved server endpoint and analytics counter before production lead collection.

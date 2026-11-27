@@ -1,12 +1,14 @@
 import { services, integration, reviews } from './data.js';
 
 const $ = selector => document.querySelector(selector);
-const money = amount => new Intl.NumberFormat('ru-RU').format(amount) + ' ₽';
+const money = amount => amount === null ? 'Индивидуально' : new Intl.NumberFormat('ru-RU').format(amount) + ' ₽';
+const servicePrice = service => (service.from ? 'от ' : '') + money(service.price);
+const estimate = () => (selected().some(service => service.from) && total() !== null ? 'от ' : '') + money(total());
 const quantities = new Map(services.map(service => [service.id,0]));
 const controls = new Map();
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 const selected = () => services.filter(service => quantities.get(service.id) > 0);
-const total = () => services.reduce((sum,service) => sum + service.price * quantities.get(service.id),0);
+const total = () => services.reduce((sum,service) => sum + quantities.get(service.id),0) > 1 ? null : services.reduce((sum,service) => sum + service.price * quantities.get(service.id),0);
 let files = [];
 let requestPending = false;
 
@@ -38,12 +40,12 @@ function buildServiceCards() {
   services.forEach((service,index) => {
     const card = element('button','service-card reveal');
     card.type = 'button';
-    card.setAttribute('aria-label',service.name + ', ' + money(service.price) + '. Добавить в расчёт');
+    card.setAttribute('aria-label',service.name + ', ' + servicePrice(service) + '. Добавить в расчёт');
     card.append(
-      element('span','service-number',String(index + 1).padStart(2,'0')),
-      element('h3','',service.name.replace('Покраска ','').replace('Восстановление ','').replace('бампера','Бампер').replace('двери','Дверь').replace('крыла','Крыло').replace('капота','Капот').replace('порога','Порог').replace('крыши','Крыша')),
-      element('span','service-kind',service.id === 'restoration' ? 'Восстановление' : 'Полная покраска'),
-      element('span','service-price',money(service.price)),
+      
+      element('h3','',service.name),
+      element('span','service-kind',service.kind),
+      element('span','service-price',servicePrice(service)),
       element('span','service-direction','↗')
     );
     card.lastChild.setAttribute('aria-hidden','true');
@@ -61,7 +63,7 @@ function buildCalculator() {
   services.forEach(service => {
     const row = element('div','calc-item');
     const description = element('div');
-    description.append(element('h4','',service.name),element('span','unit-price',money(service.price) + ' / деталь'));
+    description.append(element('h4','',service.name),element('span','unit-price',servicePrice(service) + (service.id === 'car' ? ' / автомобиль' : ' / деталь')));
     const counter = element('div','quantity-control');
     const minus = element('button','','−');
     const plus = element('button','','+');
@@ -96,10 +98,11 @@ function updateCalculation() {
   const sum = total();
   const count = services.reduce((sum,service) => sum + quantities.get(service.id),0);
   const price = $('#total-price');
-  price.textContent = money(sum);
+  price.textContent = estimate();
+  price.classList.toggle('individual',sum === null);
   price.classList.remove('updated');
   if (!reducedMotion.matches) requestAnimationFrame(() => price.classList.add('updated'));
-  $('#selection-count').textContent = count ? 'Деталей в расчёте — ' + count : 'Услуги не выбраны';
+  $('#selection-count').textContent = count ? 'В расчёте — ' + count : 'Услуги не выбраны';
   $('#continue-request').disabled = count === 0;
   $('#reset-calculator').disabled = count === 0;
   const summary = $('#selected-services');
@@ -107,20 +110,12 @@ function updateCalculation() {
   if (!count) summary.textContent = 'Услуги ещё не выбраны. Можно отправить обращение без расчёта.';
   selected().forEach(service => {
     const row = element('div','summary-item');
-    row.append(element('span','',service.name + ' × ' + quantities.get(service.id)),element('span','',money(service.price * quantities.get(service.id))));
+    row.append(element('span','',service.name + ' × ' + quantities.get(service.id)),element('span','',quantities.get(service.id) > 1 ? 'Индивидуально' : servicePrice(service)));
     summary.append(row);
   });
-  $('#form-total').textContent = money(sum);
+  $('#form-total').textContent = estimate();
   $('#clear-form-calculation').hidden = count === 0;
 }
-
-$('.offer-sills').addEventListener('click',event => {
-  event.preventDefault();
-  quantities.set('restoration',Math.max(1,quantities.get('restoration')));
-  updateCalculation();
-  openCalculator();
-  controls.get('restoration').plus.focus({preventScroll:true});
-});
 
 $('#reset-calculator').addEventListener('click', () => {
   services.forEach(service => quantities.set(service.id,0));
@@ -137,37 +132,23 @@ $('#continue-request').addEventListener('click', () => {
   $('#customer-name').focus({preventScroll:true});
 });
 
-const portfolioLabels = ['Покраска бампера','Покраска двери','Покраска крыла','Покраска капота','Восстановление порога','Покраска крыши'];
-portfolioLabels.forEach((name,index) => {
-  const article = element('article','project reveal');
-  const asset = element('div','future-visual');
-  asset.setAttribute('aria-hidden','true');
-  const heading = element('div','project-top');
-  heading.append(element('h3','',name),element('span','project-number',String(index + 1).padStart(2,'0')));
-  article.append(asset,heading,element('p','','Категория будущего портфолио'));
-  $('#portfolio-grid').append(article);
-});
-
 const topics = [
-  ['Подбор цвета','Способ подбора оттенка уточним при оценке автомобиля.'],
-  ['Технология','Состав подготовки и покраски согласуем для вашей детали.'],
-  ['Материалы','Информацию о применяемых материалах предоставит мастерская.'],
-  ['Специалисты','Команду и специализацию мастеров представим позднее.'],
-  ['Оборудование','Оснащение мастерской будет описано после подтверждения.'],
-  ['Гарантия','Условия гарантии уточняйте до начала работ.']
+ ['Согласование','Дополнительные работы и расходы обсуждаем до их выполнения.'],
+ ['Оценка по фото','Предварительно оценим повреждения по снимкам. Окончательная цена — после осмотра.'],
+ ['Ремонт после ДТП','Выполняем кузовные, сварочные, подготовительные и малярные работы.']
 ];
 topics.forEach(([title,text],index) => {
   const article = element('article','about-topic reveal');
-  article.append(element('span','technical',String(index + 1).padStart(2,'0')),element('h3','',title),element('p','',text));
+  article.append(element('h3','',title),element('p','',text));
   $('#about-topics').append(article);
 });
 
 const steps = [
-  ['Обращение','Вы рассказываете об автомобиле и нужных работах.'],
-  ['Оценка','Мастерская уточняет состояние деталей и необходимые услуги.'],
-  ['Согласование','Вы согласуете итоговую стоимость, объём и сроки.'],
-  ['Покраска','Мастерская выполняет согласованные работы.'],
-  ['Выдача','Вы осматриваете результат и получаете автомобиль.']
+ ['Фото и обращение','Пришлите фотографии повреждений и расскажите об автомобиле.'],
+ ['Осмотр и оценка','Дадим предварительный ориентир по фото. На осмотре определим полный объём ремонта.'],
+ ['Согласование','Согласуем перечень работ, окончательную стоимость и сроки.'],
+ ['Ремонт и покраска','Выполним кузовные, подготовительные и малярные работы. Проверим качество.'],
+ ['Приёмка автомобиля','Вы осматриваете результат, принимаете автомобиль и оплачиваете работы.']
 ];
 steps.forEach(([title,text],index) => {
   const li = element('li','process-step reveal');
@@ -177,13 +158,14 @@ steps.forEach(([title,text],index) => {
 });
 
 const questions = [
-  ['Как рассчитывается стоимость покраски?','В калькуляторе указаны опубликованные цены на услуги. Сумма складывается из выбранных работ и количества деталей. Окончательную стоимость мастерская подтверждает после оценки автомобиля.'],
-  ['Сколько времени занимает покраска?','Срок зависит от объёма и состояния деталей. Конкретный срок необходимо согласовать с мастерской.'],
-  ['Как подбирается цвет?','Порядок подбора оттенка и применяемую технологию уточняйте у мастерской до начала работ.'],
-  ['Можно покрасить несколько элементов?','Да, выберите несколько услуг и количество деталей в калькуляторе. Он покажет предварительную общую сумму.'],
-  ['Восстанавливаете ржавые пороги?','Восстановление порогов входит в перечень услуг. Опубликованная цена — 6 000 ₽. Возможность ремонта и окончательную стоимость подтверждают после осмотра.'],
-  ['Какая гарантия предоставляется?','Срок и условия гарантии нужно уточнить у мастерской до согласования работ.'],
-  ['Как записаться?','Позвоните по указанному номеру или напишите в Telegram. Форма на сайте сейчас подготавливает черновик обращения для самостоятельной отправки.']
+ ['Можно узнать стоимость по фотографии?','Да. Пришлите фотографии повреждений для предварительной оценки. Окончательная стоимость определяется после осмотра автомобиля.'],
+ ['Сколько времени занимает покраска детали?','Предварительный ориентир — от 1 до 3 дней. Точный срок зависит от состояния детали и объёма подготовки, его согласуем после осмотра.'],
+ ['Можно покрасить несколько элементов?','Да. Рассчитаем стоимость индивидуально с учётом количества элементов, повреждений, подготовки, цветоподбора и демонтажа.'],
+ ['Работаете с автомобилями после серьёзных ДТП?','Да. Выполняем кузовной ремонт и восстановление геометрии кузова с использованием стапеля.'],
+ ['Что может оплачиваться дополнительно?','Рихтовка, сварочные работы, устранение коррозии и дополнительные лакокрасочные материалы. Все дополнительные работы и расходы согласовываем до выполнения.'],
+ ['Можно отремонтировать только бампер или дверь?','Да. Ремонтируем отдельные кузовные элементы, включая бамперы, двери, крылья, капот и пороги.'],
+ ['Какая гарантия предоставляется?','Условия и сроки гарантии согласуем до начала работ. Уточните их при оценке вашего автомобиля.'],
+ ['Как записаться?','Позвоните или напишите в Telegram. Через форму можно подготовить обращение для самостоятельной отправки в чат мастерской.']
 ];
 questions.forEach(([question,answer],index) => {
   const item = element('div','faq-item');
@@ -317,14 +299,16 @@ function getRequestData() {
     comment:form.elements.comment.value.trim(),
     services:selected().map(service => ({id:service.id,name:service.name,quantity:quantities.get(service.id),unitPrice:service.price})),
     preliminaryTotal:total(),
+    customerType:form.elements.customerType.value,
     consent:form.elements.consent.checked
   };
 }
 function makeDraft(data) {
   const lines = ['Здравствуйте! Хочу обсудить покраску кузова.', '', 'Имя — ' + data.name, 'Телефон — ' + data.phone, 'Автомобиль — ' + data.vehicle, '', 'Работы'];
   if (!data.services.length) lines.push('Нужно обсудить с мастерской.');
-  data.services.forEach(service => lines.push(service.name + ' × ' + service.quantity + ' — ' + money(service.quantity * service.unitPrice)));
-  if (data.services.length) lines.push('Предварительная сумма — ' + money(data.preliminaryTotal));
+  data.services.forEach(service => lines.push(service.name + ' × ' + service.quantity + ' — ' + (service.quantity > 1 ? 'Индивидуально' : servicePrice(services.find(item => item.id === service.id)))));
+  if (data.services.length) lines.push('Базовый ориентир — ' + estimate());
+  if (data.customerType === 'business') lines.push('Обращение от компании / автопарка');
   if (data.comment) lines.push('',data.comment);
   if (files.length) lines.push('Фотографии прикреплю в чате — ' + files.map(file => file.name).join(', '));
   return lines.join('\n');
@@ -459,10 +443,10 @@ const offerPaint = $('.offer-paint');
 const offerSills = $('.offer-sills');
 const offerPrice = $('.offer-price');
 const offerNote = element('div','offer-side-note');
-offerNote.append(element('h2','gradient-text','Вы выбираете работы.'),element('p','','Предварительную сумму можно узнать сразу. Итоговую стоимость согласуем после оценки автомобиля.'));
+offerNote.append(...$('.offer-side-note').childNodes);
 offerRail.replaceChildren(offerIntro,offerPaint,offerFact,offerSills,offerNote,offerPrice);
 createHorizontalRail(offerRail,'Основные направления');
-createHorizontalRail($('#services-grid'),'Детали и цены');
+createHorizontalRail($('#services-grid'),'Виды покраски и базовые цены');
 createHorizontalRail($('#process-list'),'Этапы работы');
 if (reviews.length) createHorizontalRail($('#reviews-content'),'Тестовые отзывы');
 
@@ -509,3 +493,9 @@ window.addEventListener('scroll', () => {
 },{passive:true});
 window.addEventListener('resize',updateScrollUI);
 updateScrollUI();
+
+$('#business-request').addEventListener('click', () => {
+  $('#customer-type').value = 'business';
+  scrollToSection('#request-form');
+  $('#customer-name').focus({preventScroll:true});
+});
