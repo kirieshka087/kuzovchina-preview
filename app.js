@@ -15,7 +15,7 @@ let requestPending = false;
 function element(tag,className,text) {
   const node = document.createElement(tag);
   if (className) node.className = className;
-  if (text !== undefined) node.textContent = /^h[1-4]$/.test(tag) ? text.replace(/\.$/, '') : text;
+  if (text !== undefined) node.textContent = /^(h[1-4]|p)$/.test(tag) ? text.replace(/\.$/, '') : text;
   return node;
 }
 
@@ -534,7 +534,7 @@ if ('IntersectionObserver' in window) {
  const premiumObserver = new IntersectionObserver(entries => {
   entries.forEach(entry => {if(entry.isIntersecting){entry.target.classList.add('is-visible');premiumObserver.unobserve(entry.target);}});
  },{threshold:.12,rootMargin:'0px 0px -18px 0px'});
- document.querySelectorAll('.studio-gallery figure,.work-gallery figure,.report-layout,.business-layout').forEach(node => {node.classList.add('premium-reveal');premiumObserver.observe(node);});
+ document.querySelectorAll('.studio-gallery figure,.work-gallery figure,.report-layout,.business-layout,.section-heading:not(.reveal),.v5-offer-intro,.contact-heading').forEach(node => {node.classList.add('premium-reveal');premiumObserver.observe(node);});
 }
 if (matchMedia('(hover: hover) and (pointer: fine)').matches && !premiumMotionQuery.matches) {
  document.querySelectorAll('.object-card,.service-card').forEach(card => {
