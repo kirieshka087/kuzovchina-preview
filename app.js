@@ -468,21 +468,11 @@ const sectionObserver = new IntersectionObserver(entries => {
   });
 },{rootMargin:'-15% 0px -65% 0px'});
 document.querySelectorAll('.section-observed').forEach(node => sectionObserver.observe(node));
-const scrollTypography = [...document.querySelectorAll('.scroll-type')];
 let scrollFrame = false;
 function updateScrollUI() {
   $('.site-header').classList.toggle('compact',window.scrollY > 70);
   const range = document.documentElement.scrollHeight - window.innerHeight;
   $('.reading-progress').style.transform = 'scaleX(' + (range > 0 ? window.scrollY / range : 0) + ')';
-  if (!reducedMotion.matches && window.innerWidth > 800) {
-    scrollTypography.forEach(heading => {
-      const bounds = heading.getBoundingClientRect();
-      const progress = Math.max(-1,Math.min(1,(window.innerHeight * 0.55 - bounds.top) / window.innerHeight));
-      heading.style.setProperty('--type-shift',progress * 28 + 'px');
-    });
-  } else {
-    scrollTypography.forEach(heading => heading.style.setProperty('--type-shift','0px'));
-  }
   scrollFrame = false;
 }
 window.addEventListener('scroll', () => {
@@ -505,7 +495,9 @@ const reportStages = [
  {image:'paint-1600.webp',alt:'Детали в покрасочной камере',title:'Покраска и проверка',text:'Покраска в камере и контроль качества перед приёмкой автомобиля.'}
 ];
 const reportTabs = [...document.querySelectorAll('[data-report-stage]')];
+let activeReportStage=0;
 function showReportStage(index) {
+ activeReportStage=index;
  const stage = reportStages[index];
  reportTabs.forEach((tab,i) => { tab.classList.toggle('active',i === index); tab.setAttribute('aria-selected',String(i === index)); tab.tabIndex = i === index ? 0 : -1; });
  $('#report-photo').src = 'assets/' + stage.image;
@@ -565,43 +557,27 @@ setTimeout(() => {
 document.querySelectorAll('[data-case-view]').forEach(button => button.addEventListener('click',() => {
  const after = button.dataset.caseView === 'after';
  document.querySelector('.repair-case').classList.toggle('show-after',after);
- document.querySelector('.case-state').textContent = after ? 'После ремонта' : 'До ремонта';
+ document.querySelector('.case-state').textContent = after ? 'После покраски' : 'До покраски';
  document.querySelector('.case-after').setAttribute('aria-hidden',String(!after));
  document.querySelector('.case-base').setAttribute('aria-hidden',String(after));
  document.querySelectorAll('[data-case-view]').forEach(item => item.setAttribute('aria-pressed',String(item === button)));
 }));
 
-// Soft wheel interpolation; touch, keyboard and inner scroll areas remain native.
-if (matchMedia('(hover:hover) and (pointer:fine)').matches && !reducedMotion.matches) {
- let targetY=window.scrollY, frame=0, last=0;
- const stop=()=>{cancelAnimationFrame(frame);frame=0;targetY=window.scrollY;};
- const tick=time=>{
-  const dt=Math.min(32,time-last || 16);last=time;
-  const distance=targetY-window.scrollY;
-  if(Math.abs(distance)<.6){window.scrollTo({top:targetY,behavior:'instant'});frame=0;return;}
-  window.scrollTo({top:window.scrollY+distance*(1-Math.exp(-dt/105)),behavior:'instant'});
-  frame=requestAnimationFrame(tick);
- };
- window.addEventListener('wheel',event=>{
-  if(event.ctrlKey || event.metaKey || Math.abs(event.deltaX)>Math.abs(event.deltaY) || document.querySelector('dialog[open]') || document.querySelector('.navigation.open') || event.target.closest('textarea,input,select,.contact-map')) return;
-  const rail=event.target.closest('.services-grid,.process-list,.reviews-track');
-  if(event.shiftKey && rail) return;
-  event.preventDefault();
-  if(!frame)targetY=window.scrollY;
-  const delta=event.deltaY*(event.deltaMode===1?16:event.deltaMode===2?innerHeight:1);
-  targetY=Math.max(0,Math.min(document.documentElement.scrollHeight-innerHeight,targetY+delta));
-  if(!frame){last=performance.now();frame=requestAnimationFrame(tick);}
- },{passive:false});
- window.addEventListener('pointerdown',stop,{passive:true});
- window.addEventListener('keydown',stop,{passive:true});
- document.addEventListener('click',event=>{if(event.target.closest('a[href^="#"]'))stop();});
-}
-let headerY=window.scrollY;
+// Native wheel and touch scrolling; only anchor navigation is animated.
+let headerY=window.scrollY, headerDirection=0, headerTravel=0;
 window.addEventListener('scroll',()=>{
  const y=window.scrollY,header=document.querySelector('.site-header');
- if(Math.abs(y-headerY)<7)return;
+ const delta=y-headerY;
+ if(Math.abs(delta)<1)return;
+ const direction=Math.sign(delta);
+ headerTravel=direction===headerDirection ? headerTravel+Math.abs(delta) : Math.abs(delta);
+ headerDirection=direction;
  const keepVisible=y<180 || header.contains(document.activeElement) || document.querySelector('.navigation.open');
- header.classList.toggle('header-away',!keepVisible && y>headerY);
+ if(keepVisible)header.classList.remove('header-away');
+ else if(headerTravel>70)header.classList.toggle('header-away',direction>0);
  headerY=y;
 },{passive:true});
 document.querySelector('.site-header').addEventListener('focusin',()=>document.querySelector('.site-header').classList.remove('header-away'));
+
+$('#report-prev').addEventListener('click',()=>showReportStage((activeReportStage+reportStages.length-1)%reportStages.length));
+$('#report-next').addEventListener('click',()=>showReportStage((activeReportStage+1)%reportStages.length));
